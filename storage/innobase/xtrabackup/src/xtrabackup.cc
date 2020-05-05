@@ -1882,10 +1882,12 @@ static bool innodb_init_param(void) {
 
   /* The default dir for data files is the datadir of MySQL */
 
-  srv_data_home =
-      ((xtrabackup_backup || xtrabackup_stats) && innobase_data_home_dir
-           ? innobase_data_home_dir
-           : default_path);
+  std::cout << "length is " << strlen(innobase_data_home_dir) << std::endl;
+  srv_data_home = ((xtrabackup_backup || xtrabackup_stats) &&
+                           (innobase_data_home_dir != nullptr &&
+                            *innobase_data_home_dir != '\0')
+                       ? innobase_data_home_dir
+                       : default_path);
   Fil_path::normalize(srv_data_home);
   msg("xtrabackup:   innodb_data_home_dir = %s\n", srv_data_home);
 
