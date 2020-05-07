@@ -960,6 +960,13 @@ dberr_t recv_find_max_checkpoint(log_t &log, ulint *max_field) {
   checksum in the first redo log format (version 0). */
   log.format = mach_read_from_4(buf + LOG_HEADER_FORMAT);
 
+  if (log_detected_format == UINT32_MAX) {
+    log_detected_format = log.format;
+  } else {
+    // TODO: make it debug assert
+    ut_a(log.format == log_detected_format);
+  }
+
   if (log.format != 0 && !recv_check_log_header_checksum(buf)) {
     ib::error(ER_IB_MSG_1264) << "Invalid redo log header checksum.";
 
@@ -979,24 +986,12 @@ dberr_t recv_find_max_checkpoint(log_t &log, ulint *max_field) {
 
       return (DB_ERROR);
 
-    case LOG_HEADER_FORMAT_8_0_3:
-      /* v3 has compatibility with v4. Upgrades LOG_HEADER_FORMAT */
-      log.format = LOG_HEADER_FORMAT_8_0_19;
-      mach_write_to_4(buf + LOG_HEADER_FORMAT, log.format);
-      log_block_set_checksum(buf, log_block_calc_checksum_crc32(buf));
-      if (!srv_read_only_mode) {
-        const auto err =
-            fil_redo_io(IORequestLogWrite, page_id_t{log.files_space_id, 0},
-                        univ_page_size, 0, OS_FILE_LOG_BLOCK_SIZE, buf);
-        ut_a(err == DB_SUCCESS);
-      }
-      break;
-
     case LOG_HEADER_FORMAT_5_7_9:
     case LOG_HEADER_FORMAT_8_0_1:
 
       ib::info(ER_IB_MSG_704, ulong{log.format});
 
+    case LOG_HEADER_FORMAT_8_0_3:
     case LOG_HEADER_FORMAT_CURRENT:
       /* The checkpoint page format is identical upto v4. */
       break;
@@ -3769,12 +3764,12 @@ dberr_t recv_recovery_from_checkpoint_start(log_t &log, lsn_t flush_lsn,
   contiguous_lsn = checkpoint_lsn;
 
   switch (log.format) {
+    case LOG_HEADER_FORMAT_8_0_3:
     case LOG_HEADER_FORMAT_CURRENT:
       break;
 
     case LOG_HEADER_FORMAT_5_7_9:
     case LOG_HEADER_FORMAT_8_0_1:
-    case LOG_HEADER_FORMAT_8_0_3:
 
       ib::info(ER_IB_MSG_732, ulong{log.format});
 

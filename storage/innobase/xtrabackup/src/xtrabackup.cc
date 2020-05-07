@@ -4637,6 +4637,9 @@ retry:
     goto error;
   }
 
+  log_format = mach_read_from_4(log_buf + LOG_HEADER_FORMAT);
+  log_detected_format = log_format;
+
   if (ut_memcmp(log_buf + LOG_HEADER_CREATOR, (byte *)"xtrabkup",
                 (sizeof "xtrabkup") - 1) != 0) {
     if (xtrabackup_incremental_dir) {
@@ -4648,8 +4651,6 @@ retry:
         "to '--prepare'.\n");
     goto skip_modify;
   }
-
-  log_format = mach_read_from_4(log_buf + LOG_HEADER_FORMAT);
 
   if (log_format < LOG_HEADER_FORMAT_8_0_1) {
     msg("xtrabackup: error: Unsupported redo log format " UINT32PF
@@ -4669,8 +4670,10 @@ retry:
     /* InnoDB using CRC32 by default since 5.7.9+ */
     if (log_block_get_checksum(log_buf + field) ==
             log_block_calc_checksum_crc32(log_buf + field) &&
-        mach_read_from_4(log_buf + LOG_HEADER_FORMAT) ==
-            LOG_HEADER_FORMAT_CURRENT) {
+        (mach_read_from_4(log_buf + LOG_HEADER_FORMAT) ==
+            LOG_HEADER_FORMAT_CURRENT ||
+	 mach_read_from_4(log_buf + LOG_HEADER_FORMAT) ==
+            LOG_HEADER_FORMAT_8_0_3)) {
       if (!innodb_checksum_algorithm_specified) {
         srv_checksum_algorithm = SRV_CHECKSUM_ALGORITHM_CRC32;
       }
@@ -4693,7 +4696,7 @@ retry:
     goto error;
   }
 
-  mach_write_to_4(log_buf + LOG_HEADER_FORMAT, LOG_HEADER_FORMAT_CURRENT);
+  mach_write_to_4(log_buf + LOG_HEADER_FORMAT, log_format);
   update_log_temp_checkpoint(log_buf, max_lsn);
 
   success = os_file_write(write_request, src_path, src_file, log_buf, 0,
