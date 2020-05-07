@@ -56,6 +56,7 @@ function ssl_version()
         sslv="${sslv}.deb"
         echo "$sslv"
     fi
+    echo $sslv
 }
 
 case "$1" in
