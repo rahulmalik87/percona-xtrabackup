@@ -51,11 +51,11 @@ function ssl_version()
 
     if [ $sslv -eq '102' -a -f '/usr/bin/yum' ]; then
         sslv="${sslv}.rpm"
-    else
+        echo "$sslv"
+    elif [ $sslv -eq '102' ]; then
         sslv="${sslv}.deb"
+        echo "$sslv"
     fi
-
-    echo $sslv
 }
 
 case "$1" in
