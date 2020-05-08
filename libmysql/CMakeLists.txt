@@ -242,12 +242,6 @@ IF(WIN32)
   LIST(APPEND LIBS_TO_MERGE auth_win_client)
 ENDIF()
 
-<<<<<<< HEAD
-=======
-# LDAP authentication SASL client plugin
-ADD_SUBDIRECTORY(authentication_ldap)
-
->>>>>>> mysql-8.0.20
 # Merge several convenience libraries into one big mysqlclient
 MERGE_CONVENIENCE_LIBRARIES(mysqlclient ${LIBS_TO_MERGE} COMPONENT Development SKIP_INSTALL)
 TARGET_LINK_LIBRARIES(mysqlclient PRIVATE ${LIBS_TO_LINK})

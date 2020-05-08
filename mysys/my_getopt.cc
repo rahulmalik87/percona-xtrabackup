@@ -138,11 +138,7 @@ bool is_key_cache_variable_suffix(const char *suffix) {
 */
 int handle_options(int *argc, char ***argv, const struct my_option *longopts,
                    my_get_one_option get_one_option) {
-<<<<<<< HEAD
-  return my_handle_options(argc, argv, longopts, get_one_option, NULL, false,
-=======
-  return my_handle_options(argc, argv, longopts, get_one_option, nullptr,
->>>>>>> mysql-8.0.20
+  return my_handle_options(argc, argv, longopts, get_one_option, nullptr, false,
                            false);
 }
 
@@ -492,19 +488,11 @@ int my_handle_options(int *argc, char ***argv, const struct my_option *longopts,
               *optend was set to '0' if one used --disable-option
             */
             (*argc)--;
-<<<<<<< HEAD
             if (!optend) {
               if (!validate_only) *((bool *)value) = true;
             } else {
-              bool ret = 0;
-              bool error = 0;
-=======
-            if (!optend)
-              *((bool *)value) = true;
-            else {
               bool ret = false;
               bool error = false;
->>>>>>> mysql-8.0.20
               ret = get_bool_argument(optend, &error);
               if (error) {
                 my_getopt_error_reporter(WARNING_LEVEL,
@@ -595,14 +583,9 @@ int my_handle_options(int *argc, char ***argv, const struct my_option *longopts,
                   /* the other loop will break, because *optend + 1 == 0 */
                 }
               }
-<<<<<<< HEAD
+              int error;
               if (!validate_only && (error = setval(optp, optp->value, argument,
                                                     set_maximum_value)))
-=======
-              int error;
-              if ((error =
-                       setval(optp, optp->value, argument, set_maximum_value)))
->>>>>>> mysql-8.0.20
                 return error;
               if (get_one_option && get_one_option(optp->id, optp, argument))
                 return EXIT_UNSPECIFIED_ERROR;
@@ -642,13 +625,9 @@ int my_handle_options(int *argc, char ***argv, const struct my_option *longopts,
           (*argc)--; /* option handled (short), decrease argument count */
         continue;
       }
-<<<<<<< HEAD
+      int error;
       if (!validate_only &&
           (error = setval(optp, value, argument, set_maximum_value)))
-=======
-      int error;
-      if ((error = setval(optp, value, argument, set_maximum_value)))
->>>>>>> mysql-8.0.20
         return error;
       if (get_one_option && get_one_option(optp->id, optp, argument))
         return EXIT_UNSPECIFIED_ERROR;

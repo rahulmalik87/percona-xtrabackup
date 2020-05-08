@@ -503,12 +503,7 @@ class Tablespace_dirs {
 
   /** Discover tablespaces by reading the header from .ibd files.
   @return DB_SUCCESS if all goes well */
-<<<<<<< HEAD
-  dberr_t scan(const std::string &in_directories, bool populate_fil_cache)
-      MY_ATTRIBUTE((warn_unused_result));
-=======
-  dberr_t scan() MY_ATTRIBUTE((warn_unused_result));
->>>>>>> mysql-8.0.20
+  dberr_t scan(bool populate_fil_cache) MY_ATTRIBUTE((warn_unused_result));
 
   /** Clear all the tablespace file data but leave the list of
   scanned directories in place. */
@@ -1520,9 +1515,8 @@ class Fil_system {
 
   /** Scan the directories to build the tablespace ID to file name
   mapping table. */
-<<<<<<< HEAD
-  dberr_t scan(const std::string &directories, bool populate_fil_cache) {
-    return (m_dirs.scan(directories, populate_fil_cache));
+  dberr_t scan(bool populate_fil_cache) {
+    return (m_dirs.scan(populate_fil_cache));
   }
 
   /** Open all known tablespaces. */
@@ -1536,9 +1530,6 @@ class Fil_system {
       MY_ATTRIBUTE((warn_unused_result)) {
     return (m_dirs.insert(space_id, filename));
   }
-=======
-  dberr_t scan() { return (m_dirs.scan()); }
->>>>>>> mysql-8.0.20
 
   /** Get the tablespace ID from an .ibd and/or an undo tablespace.
   If the ID is == 0 on the first page then try with Datafile::find_space_id().
@@ -10254,16 +10245,6 @@ byte *fil_tablespace_redo_create(byte *ptr, const byte *end,
     return (ptr);
   }
 
-<<<<<<< HEAD
-=======
-  /* Update filename with correct partition case, if needed. */
-  std::string name_str(name);
-  std::string space_name;
-  fil_update_partition_name(page_id.space(), 0, false, space_name, name_str);
-
-  auto abs_name = Fil_path::get_real_path(name_str);
-
->>>>>>> mysql-8.0.20
   /* Duplicates should have been sorted out before we get here. */
   ut_a(result.second->size() == 1);
 
@@ -10673,9 +10654,9 @@ byte *fil_tablespace_redo_encryption(byte *ptr, const byte *end,
       return (ptr + len);
     }
   } else {
-    ulint master_key_id = mach_read_from_4(ptr + ENCRYPTION_MAGIC_SIZE);
-    if (Encryption::s_master_key_id < master_key_id) {
-      Encryption::s_master_key_id = master_key_id;
+    ulint master_key_id = mach_read_from_4(ptr + Encryption::MAGIC_SIZE);
+    if (Encryption::get_master_key_id() < master_key_id) {
+      Encryption::set_master_key(master_key_id);
     }
     bool found = xb_fetch_tablespace_key(space_id, key, iv);
     ut_a(found);
@@ -11076,7 +11057,6 @@ space_id_t Fil_system::get_tablespace_id(const std::string &filename) {
   return (space_id);
 }
 
-<<<<<<< HEAD
 /** Open tablespace file for backup.
 @param[in]  path  file path.
 @param[in]  name  space name.
@@ -11188,7 +11168,8 @@ void Tablespace_dirs::open_ibds() const {
   for (auto dir : m_dirs) {
     dir.open_ibds();
   }
-=======
+}
+
 void Fil_system::rename_partition_files(bool revert) {
   /* If revert, then we are downgrading after upgrade failure from 5.7 */
   ut_ad(!revert || srv_downgrade_partition_files);
@@ -11207,7 +11188,6 @@ void Fil_system::rename_partition_files(bool revert) {
     fil_rename_partition_file(old_path, IBD, revert, false);
   }
 #endif /* !UNIV_HOTBACKUP */
->>>>>>> mysql-8.0.20
 }
 
 /** Check for duplicate tablespace IDs.
@@ -11315,21 +11295,12 @@ void Tablespace_dirs::print_duplicates(const Space_id_set &duplicates) {
   }
 }
 
-<<<<<<< HEAD
-/** Discover tablespaces by reading the header from .ibd files.
-@param[in]	in_directories	Directories to scan
-@return DB_SUCCESS if all goes well */
-dberr_t Tablespace_dirs::scan(const std::string &in_directories,
-                              bool populate_fil_cache) {
-  std::string directories(in_directories);
-=======
 static bool fil_get_partition_file(const std::string &old_path,
                                    ib_file_suffix extn, std::string &new_path) {
 #ifdef _WIN32
   /* Safe check. Never needed on Windows. */
   return (false);
 #endif /* WIN32 */
->>>>>>> mysql-8.0.20
 
 #ifndef UNIV_HOTBACKUP
   /* Needed only for case sensitive file system. */
@@ -11464,8 +11435,9 @@ void Tablespace_dirs::set_scan_dirs(const std::string &in_directories) {
 }
 
 /** Discover tablespaces by reading the header from .ibd files.
+@param[in]      in_directories  Directories to scan
 @return DB_SUCCESS if all goes well */
-dberr_t Tablespace_dirs::scan() {
+dberr_t Tablespace_dirs::scan(bool populate_fil_cache) {
   Scanned_files ibd_files;
   Scanned_files undo_files;
   uint16_t count = 0;
@@ -11611,18 +11583,11 @@ void fil_set_scan_dirs(const std::string &directories) {
 }
 
 /** Discover tablespaces by reading the header from .ibd files.
-<<<<<<< HEAD
-@param[in]  directories Directories to scan
 @param[in]  populate_fil_cache Whether to load tablespaces into fil cache
 @return DB_SUCCESS if all goes well */
-dberr_t fil_scan_for_tablespaces(const std::string &directories,
-                                 bool populate_fil_cache) {
-  return (fil_system->scan(directories, populate_fil_cache));
+dberr_t fil_scan_for_tablespaces(bool populate_fil_cache) {
+  return (fil_system->scan(populate_fil_cache));
 }
-=======
-@return DB_SUCCESS if all goes well */
-dberr_t fil_scan_for_tablespaces() { return (fil_system->scan()); }
->>>>>>> mysql-8.0.20
 
 /** Open all known tablespaces. */
 void fil_open_ibds() { fil_system->open_ibds(); }

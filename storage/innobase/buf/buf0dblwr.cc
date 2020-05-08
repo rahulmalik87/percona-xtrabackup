@@ -235,42 +235,8 @@ class Double_write {
     /** @return number of active elements. */
     uint32_t size() const noexcept { return m_size; }
 
-<<<<<<< HEAD
-/**
-At database startup initializes the doublewrite buffer memory structure if
-we already have a doublewrite buffer created in the data files. If we are
-upgrading to an InnoDB version which supports multiple tablespaces, then this
-function performs the necessary update operations. If we are in a crash
-recovery, this function loads the pages from double write buffer into memory.
-@param[in]	file	                File handle
-@param[in]  path                  Path name of file
-@param[in]  load_corrupt_pages    Whether to load corrupt pages
-@return DB_SUCCESS or error code */
-dberr_t buf_dblwr_init_or_load_pages(pfs_os_file_t file, const char *path,
-                                     bool load_corrupt_pages) {
-  byte *buf;
-  byte *page;
-  page_no_t block1;
-  page_no_t block2;
-  space_id_t space_id;
-  byte *read_buf;
-  byte *doublewrite;
-  byte *unaligned_read_buf;
-  ibool reset_space_ids = FALSE;
-
-  /* We do the file i/o past the buffer pool */
-
-  unaligned_read_buf = static_cast<byte *>(ut_malloc_nokey(2 * UNIV_PAGE_SIZE));
-
-  read_buf = static_cast<byte *>(ut_align(unaligned_read_buf, UNIV_PAGE_SIZE));
-
-  /* Read the trx sys header to check if we are using the doublewrite
-  buffer */
-  dberr_t err;
-=======
     /** @return the capacity of the collection. */
     uint32_t capacity() const noexcept { return m_pages.capacity(); }
->>>>>>> mysql-8.0.20
 
     using Pages = std::vector<buf_page_t *>;
 
@@ -409,14 +375,7 @@ dberr_t buf_dblwr_init_or_load_pages(pfs_os_file_t file, const char *path,
         break;
       }
 
-<<<<<<< HEAD
-    } else if (load_corrupt_pages) {
-      ut_error;
-      recv_dblwr_t &recv_dblwr = recv_sys->dblwr;
-      recv_dblwr.add(page);
-=======
       ut_ad(!mutex_own(&m_mutex));
->>>>>>> mysql-8.0.20
     }
 
     m_buf_pages.push_back(bpage);

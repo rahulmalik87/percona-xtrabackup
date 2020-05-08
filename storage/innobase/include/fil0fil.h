@@ -1956,7 +1956,6 @@ or MLOG_FILE_RENAME record. These could not be recovered
 ignore redo log records during the apply phase */
 bool fil_check_missing_tablespaces() MY_ATTRIBUTE((warn_unused_result));
 
-<<<<<<< HEAD
 /** Open tablespace file for backup.
 @param[in]  path  file path.
 @param[in]  name  space name.
@@ -1967,13 +1966,6 @@ dberr_t fil_open_for_xtrabackup(const std::string &path,
 /** Open all known tablespaces. */
 void fil_open_ibds();
 
-/** Discover tablespaces by reading the header from .ibd files.
-@param[in]	directories	Directories to scan
-@param[in]  populate_fil_cache Whether to load tablespaces into fil cache
-@return DB_SUCCESS if all goes well */
-dberr_t fil_scan_for_tablespaces(const std::string &directories,
-                                 bool populate_fil_cache);
-=======
 /** Normalize and save a directory to scan for datafiles.
 @param[in]  directory    directory to scan for ibd and ibu files
 @param[in]  is_undo_dir  true for an undo directory */
@@ -1985,9 +1977,9 @@ void fil_set_scan_dir(const std::string &directory, bool is_undo_dir = false);
 void fil_set_scan_dirs(const std::string &directories);
 
 /** Discover tablespaces by reading the header from .ibd files.
+@param[in]  populate_fil_cache Whether to load tablespaces into fil cache
 @return DB_SUCCESS if all goes well */
-dberr_t fil_scan_for_tablespaces();
->>>>>>> mysql-8.0.20
+dberr_t fil_scan_for_tablespaces(bool populate_fil_cache);
 
 /** Open the tabelspace and also get the tablespace filenames, space_id must
 already be known.

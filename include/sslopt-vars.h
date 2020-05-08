@@ -35,13 +35,7 @@
 #include "template_utils.h"
 #include "typelib.h"
 
-<<<<<<< HEAD
-#if defined(HAVE_OPENSSL)
-
 #if defined(MYSQL_SERVER) && !defined(XTRABACKUP)
-=======
-#ifdef MYSQL_SERVER
->>>>>>> mysql-8.0.20
 #error This header is supposed to be used only in the client
 #endif
 
@@ -64,20 +58,6 @@ const char *ssl_fips_mode_names_lib[] = {"OFF", "ON", "STRICT", NullS};
 TYPELIB ssl_fips_mode_typelib = {array_elements(ssl_fips_mode_names_lib) - 1,
                                  "", ssl_fips_mode_names_lib, nullptr};
 
-<<<<<<< HEAD
-uint opt_ssl_mode = SSL_MODE_PREFERRED;
-char *opt_ssl_ca = 0;
-char *opt_ssl_capath = 0;
-char *opt_ssl_cert = 0;
-char *opt_ssl_cipher = 0;
-char *opt_tls_ciphersuites = 0;
-char *opt_ssl_key = 0;
-char *opt_ssl_crl = 0;
-char *opt_ssl_crlpath = 0;
-char *opt_tls_version = 0;
-ulong opt_ssl_fips_mode = SSL_FIPS_MODE_OFF;
-bool ssl_mode_set_explicitly = false;
-=======
 static uint opt_ssl_mode = SSL_MODE_PREFERRED;
 static char *opt_ssl_ca = nullptr;
 static char *opt_ssl_capath = nullptr;
@@ -90,7 +70,6 @@ static char *opt_ssl_crlpath = nullptr;
 static char *opt_tls_version = nullptr;
 static ulong opt_ssl_fips_mode = SSL_FIPS_MODE_OFF;
 static bool ssl_mode_set_explicitly = false;
->>>>>>> mysql-8.0.20
 
 static inline int set_client_ssl_options(MYSQL *mysql) {
   /*

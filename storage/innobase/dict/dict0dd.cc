@@ -376,6 +376,7 @@ dict_table_t *dd_table_create_on_dd_obj(const dd::Table *dd_table,
                                         const dd::Partition *dd_part,
                                         const dd::String_type *schema_name,
                                         bool is_implicit) {
+  using namespace dict_name;
   mem_heap_t *heap = mem_heap_create(1000);
 
   char table_name[MAX_SPACE_NAME_LEN + 1];

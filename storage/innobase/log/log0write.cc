@@ -2651,9 +2651,8 @@ bool log_read_encryption() {
 
   ut_a(err == DB_SUCCESS);
 
-<<<<<<< HEAD
-  if (memcmp(log_block_buf + LOG_HEADER_CREATOR_END, ENCRYPTION_KEY_MAGIC_V3,
-             ENCRYPTION_MAGIC_SIZE) == 0) {
+  if (memcmp(log_block_buf + LOG_HEADER_CREATOR_END, Encryption::KEY_MAGIC_V3,
+             Encryption::MAGIC_SIZE) == 0) {
     if (use_dumped_tablespace_keys && !srv_backup_mode) {
       ut_free(log_block_buf_ptr);
       fil_space_t *space = fil_space_get(dict_sys_t::s_log_space_first_id);
@@ -2668,10 +2667,6 @@ bool log_read_encryption() {
       /* check_keyring modifies keyring by generating new key and saving it.
       XtraBackup must avoid touching keyring on backup. */
 #if !defined(XTRABACKUP)
-=======
-  if (memcmp(log_block_buf + LOG_HEADER_CREATOR_END, Encryption::KEY_MAGIC_V3,
-             Encryption::MAGIC_SIZE) == 0) {
->>>>>>> mysql-8.0.20
     /* Make sure the keyring is loaded. */
     if (!Encryption::check_keyring()) {
       ut_free(log_block_buf_ptr);

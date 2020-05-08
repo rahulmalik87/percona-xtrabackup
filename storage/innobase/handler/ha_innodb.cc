@@ -4938,32 +4938,8 @@ static int innobase_init_files(dict_init_mode_t dict_init_mode,
 
   srv_is_upgrade_mode = (dict_init_mode == DICT_INIT_UPGRADE_57_FILES);
 
-<<<<<<< HEAD
-  /* InnoDB files should be found in the following locations only. */
-  std::string directories;
-
-  /* This is the default directory for .ibd files. */
-  directories.append(MySQL_datadir_path.path());
-
-  directories.push_back(FIL_PATH_SEPARATOR);
-  directories.append(srv_data_home);
-
-  if (innobase_directories != nullptr && *innobase_directories != 0) {
-    Fil_path::normalize(innobase_directories);
-    directories.push_back(FIL_PATH_SEPARATOR);
-    directories.append(Fil_path::parse(innobase_directories));
-  }
-
-  if (srv_undo_dir != nullptr && *srv_undo_dir != 0) {
-    directories.push_back(FIL_PATH_SEPARATOR);
-    directories.append(srv_undo_dir);
-  }
-
-  err = srv_start(create, directories, ULLONG_MAX);
-=======
   /* Start the InnoDB server. */
-  err = srv_start(create);
->>>>>>> mysql-8.0.20
+  err = srv_start(create, ULLONG_MAX);
 
   if (err != DB_SUCCESS) {
     return innodb_init_abort();

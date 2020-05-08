@@ -230,13 +230,8 @@ int Persisted_variables_cache::init(int *argc, char ***argv) {
   memcpy((uchar *)res, (char *)(*argv), (*argc) * sizeof(char *));
 
   my_getopt_skip_unknown = true;
-<<<<<<< HEAD
-  if (my_handle_options(&temp_argc, &res, persist_options, NULL, NULL, true,
-                        false)) {
-=======
   if (my_handle_options(&temp_argc, &res, persist_options, nullptr, nullptr,
-                        true)) {
->>>>>>> mysql-8.0.20
+                        true, false)) {
     free_root(&alloc, MYF(0));
     return 1;
   }

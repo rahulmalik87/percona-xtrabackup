@@ -544,17 +544,9 @@ dberr_t SysTablespace::read_lsn_and_check_flags(lsn_t *flushed_lsn) {
 
   ut_a(it->order() == 0);
 
-<<<<<<< HEAD
-  /* XtraBackup never loads corrupted pages from
-  the doublewrite buffer */
-  buf_dblwr_init_or_load_pages(it->handle(), it->filepath(), false);
-=======
-  err = recv_sys->dblwr->load();
-
   if (err != DB_SUCCESS) {
     return (err);
   }
->>>>>>> mysql-8.0.20
 
   /* Check the contents of the first page of the first datafile. */
   for (int retry = 0; retry < 2; ++retry) {

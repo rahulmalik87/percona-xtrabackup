@@ -1761,7 +1761,7 @@ extern bool deinitialize_minimal_chassis(SERVICE_TYPE_NO_CONST(registry) *
   @retval false success
   @retval true failure
 */
-static bool component_infrastructure_init() {
+bool component_infrastructure_init() {
   if (initialize_minimal_chassis(&srv_registry)) {
     LogErr(ERROR_LEVEL, ER_COMPONENTS_INFRASTRUCTURE_BOOTSTRAP);
     return true;
@@ -1855,7 +1855,7 @@ static bool mysql_component_infrastructure_init() {
   @retval false success
   @retval true failure
 */
-static bool component_infrastructure_deinit() {
+bool component_infrastructure_deinit() {
   persistent_dynamic_loader_deinit();
 
   srv_registry->release(reinterpret_cast<my_h_service>(
@@ -8102,22 +8102,14 @@ struct my_option my_long_options[] = {
 #endif
     {"sporadic-binlog-dump-fail", 0,
      "Option used by mysql-test for debugging and testing of replication.",
-<<<<<<< HEAD
      &opt_sporadic_binlog_dump_fail, &opt_sporadic_binlog_dump_fail, 0,
-     GET_BOOL, NO_ARG, 0, 0, 0, 0, 0, 0},
-#ifndef XTRABACKUP
-    {"ssl", 0,
-     "Enable SSL for connection (automatically enabled with other flags).",
-     &opt_use_ssl, &opt_use_ssl, 0, GET_BOOL, OPT_ARG, 1, 0, 0, 0, 0, 0},
-#endif /* XTRABACKUP */
-=======
-     &opt_sporadic_binlog_dump_fail, &opt_sporadic_binlog_dump_fail, nullptr,
      GET_BOOL, NO_ARG, 0, 0, 0, nullptr, 0, nullptr},
+#ifndef XTRABACKUP
     {"ssl", 0,
      "Enable SSL for connection (automatically enabled with other flags).",
      &opt_use_ssl, &opt_use_ssl, nullptr, GET_BOOL, OPT_ARG, 1, 0, 0, nullptr,
      0, nullptr},
->>>>>>> mysql-8.0.20
+#endif /* XTRABACKUP */
 #ifdef _WIN32
     {"standalone", 0, "Dummy option to start as a standalone program (NT).", 0,
      0, 0, GET_NO_ARG, NO_ARG, 0, 0, 0, 0, 0, 0},

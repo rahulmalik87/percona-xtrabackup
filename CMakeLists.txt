@@ -1485,6 +1485,7 @@ ENDIF()
 
 IF(NOT WITHOUT_SERVER)
   CONFIGURE_COMPONENTS()
+  ADD_SUBDIRECTORY("components/libminchassis")
 ENDIF()
 
 IF(WITH_UNIT_TESTS)
@@ -1522,13 +1523,7 @@ ADD_SUBDIRECTORY(scripts)
 
 IF(NOT WITHOUT_SERVER)
   ADD_SUBDIRECTORY(mysql-test)
-<<<<<<< HEAD
-  IF(EXISTS ${CMAKE_SOURCE_DIR}/internal/CMakeLists.txt)
-=======
-  ADD_SUBDIRECTORY(mysql-test/lib/My/SafeProcess)
-  ADD_SUBDIRECTORY(support-files)
   IF(WITH_INTERNAL)
->>>>>>> mysql-8.0.20
     ADD_SUBDIRECTORY(internal)
   ENDIF()
 ENDIF()

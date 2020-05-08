@@ -708,10 +708,9 @@ static dberr_t srv_undo_tablespace_read_encryption(pfs_os_file_t fh,
     return (DB_SUCCESS);
   }
 
-<<<<<<< HEAD
   if (!use_dumped_tablespace_keys || srv_backup_mode) {
-    byte key[ENCRYPTION_KEY_LEN];
-    byte iv[ENCRYPTION_KEY_LEN];
+    byte key[Encryption::KEY_LEN];
+    byte iv[Encryption::KEY_LEN];
     if (fsp_header_get_encryption_key(space->flags, key, iv, first_page)) {
       fsp_flags_set_encryption(space->flags);
       err = fil_set_encryption(space->id, Encryption::AES, key, iv);
@@ -720,14 +719,6 @@ static dberr_t srv_undo_tablespace_read_encryption(pfs_os_file_t fh,
       ut_free(first_page_buf);
       return (DB_FAIL);
     }
-=======
-  byte key[Encryption::KEY_LEN];
-  byte iv[Encryption::KEY_LEN];
-  if (fsp_header_get_encryption_key(space->flags, key, iv, first_page)) {
-    fsp_flags_set_encryption(space->flags);
-    err = fil_set_encryption(space->id, Encryption::AES, key, iv);
-    ut_ad(err == DB_SUCCESS);
->>>>>>> mysql-8.0.20
   } else {
     err = xb_set_encryption(space);
     if (err != DB_SUCCESS) {
@@ -1898,7 +1889,6 @@ static lsn_t srv_prepare_to_delete_redo_log_files(ulint n_files) {
   return (flushed_lsn);
 }
 
-<<<<<<< HEAD
 /** At startup load the encryption information from first datafile
 to tablespace object
 @return DB_SUCCESS on succes, others on failure */
@@ -1923,15 +1913,9 @@ static dberr_t srv_sys_enable_encryption() {
 
 /** Start InnoDB.
 @param[in]  create_new_db     Whether to create a new database
-@param[in]  scan_directories  Scan directories for .ibd files for
-                                        recovery "dir1;dir2; ... dirN"
 @param[in]  to_lsn            LSN to stop recovery at
 @return DB_SUCCESS or error code */
-dberr_t srv_start(bool create_new_db, const std::string &scan_directories,
-                  lsn_t to_lsn) {
-=======
-dberr_t srv_start(bool create_new_db) {
->>>>>>> mysql-8.0.20
+dberr_t srv_start(bool create_new_db, lsn_t to_lsn) {
   lsn_t flushed_lsn;
 
   /* just for assertions */
@@ -2085,11 +2069,7 @@ dberr_t srv_start(bool create_new_db) {
     return (srv_init_abort(err));
   }
 
-<<<<<<< HEAD
-  err = fil_scan_for_tablespaces(scan_directories, false);
-=======
-  err = fil_scan_for_tablespaces();
->>>>>>> mysql-8.0.20
+  err = fil_scan_for_tablespaces(false);
 
   if (err != DB_SUCCESS) {
     return (srv_init_abort(err));

@@ -622,11 +622,6 @@ void btr_node_ptr_set_child_page_no(
   }
 }
 
-<<<<<<< HEAD
-/** Returns the child page of a node pointer and sx-latches it.
- @return child page, sx-latched */
-=======
->>>>>>> mysql-8.0.20
 buf_block_t *btr_node_ptr_get_child(
     const rec_t *node_ptr, /*!< in: node pointer */
     dict_index_t *index,   /*!< in: index */

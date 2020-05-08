@@ -3189,12 +3189,8 @@ loop:
     /* xtrabackup does not bind MySQL sessions to InnoDB ones */
 #ifndef XTRABACKUP
       UT_DELETE(thd_to_innodb_session(thd));
-<<<<<<< HEAD
-      thd_to_innodb_session(thd) = NULL;
-#endif
-=======
       thd_to_innodb_session(thd) = nullptr;
->>>>>>> mysql-8.0.20
+#endif
     }
 
     return (n_tables + n_tables_dropped);
