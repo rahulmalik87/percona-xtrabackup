@@ -1727,7 +1727,7 @@ static bool fil_op_replay_rename(const page_id_t &page_id,
                                  const std::string &new_name)
     MY_ATTRIBUTE((warn_unused_result));
 
-#ifndef UNIV_HOTBACKUP
+#if !defined(UNIV_HOTBACKUP) && !defined(XTRABACKUP)
 /** Rename partition file.
 @param[in]	old_path	old file path
 @param[in]	extn		file extension suffix
@@ -1736,8 +1736,9 @@ static bool fil_op_replay_rename(const page_id_t &page_id,
 static void fil_rename_partition_file(const std::string &old_path,
                                       ib_file_suffix extn, bool revert,
                                       bool import);
-#endif /* !UNIV_HOTBACKUP */
+#endif /* !UNIV_HOTBACKUP && !XTRABACKUP */
 
+#ifndef XTRABACKUP
 /** Get modified name for partition file. During upgrade we change all
 partition files to have lower case separator and partition name.
 @param[in]	old_path	old file name and path
@@ -1746,6 +1747,7 @@ partition files to have lower case separator and partition name.
 @return true, iff name needs modification. */
 static bool fil_get_partition_file(const std::string &old_path,
                                    ib_file_suffix extn, std::string &new_path);
+#endif /* XTRABACKUP */
 
 #ifdef UNIV_DEBUG
 /** Try fil_validate() every this many times */
@@ -8636,11 +8638,6 @@ void fil_adjust_name_import(dict_table_t *table, const char *path,
     found_path = true;
   });
 
-  /* Check and rename the import file name. */
-  if (found_path) {
-    fil_rename_partition_file(saved_path, extn, false, true);
-  }
-
   return;
 }
 
@@ -11178,7 +11175,7 @@ void Fil_system::rename_partition_files(bool revert) {
     return;
   }
 
-#ifndef UNIV_HOTBACKUP
+#if !defined(UNIV_HOTBACKUP) && !defined(XTRABACKUP)
   ut_ad(!lower_case_file_system);
 
   for (auto &old_path : m_old_paths) {
@@ -11187,7 +11184,7 @@ void Fil_system::rename_partition_files(bool revert) {
 
     fil_rename_partition_file(old_path, IBD, revert, false);
   }
-#endif /* !UNIV_HOTBACKUP */
+#endif /* !UNIV_HOTBACKUP && !XTRABACKUP */
 }
 
 /** Check for duplicate tablespace IDs.
@@ -11295,6 +11292,7 @@ void Tablespace_dirs::print_duplicates(const Space_id_set &duplicates) {
   }
 }
 
+#ifndef XTRABACKUP
 static bool fil_get_partition_file(const std::string &old_path,
                                    ib_file_suffix extn, std::string &new_path) {
 #ifdef _WIN32
@@ -11303,6 +11301,7 @@ static bool fil_get_partition_file(const std::string &old_path,
 #endif /* WIN32 */
 
 #ifndef UNIV_HOTBACKUP
+
   /* Needed only for case sensitive file system. */
   if (lower_case_file_system) {
     return (false);
@@ -11342,7 +11341,9 @@ static bool fil_get_partition_file(const std::string &old_path,
   return (true);
 }
 
-#ifndef UNIV_HOTBACKUP
+#endif /* !XTRABACKUP */
+
+#if !defined(UNIV_HOTBACKUP) && !defined(XTRABACKUP)
 static void fil_rename_partition_file(const std::string &old_path,
                                       ib_file_suffix extn, bool revert,
                                       bool import) {
@@ -11411,7 +11412,7 @@ static void fil_rename_partition_file(const std::string &old_path,
     print_upgrade = false;
   }
 }
-#endif /* !UNIV_HOTBACKUP */
+#endif /* !UNIV_HOTBACKUP && !XTRABACKUP */
 
 void Tablespace_dirs::set_scan_dir(const std::string &in_directory,
                                    bool is_undo_dir) {
@@ -11465,17 +11466,8 @@ dberr_t Tablespace_dirs::scan(bool populate_fil_cache) {
       /* Check if need to alter partition file names to lower case. */
       std::string new_path;
 
-      if (fil_get_partition_file(path, IBD, new_path)) {
-        /* Note all old file names to be renamed. */
-        ut_ad(!new_path.empty());
-        fil_system->add_old_file(path);
-
-      } else {
-        new_path.assign(path);
-      }
-
       /* Make the filename relative to the directory that was scanned. */
-      std::string file = new_path.substr(real_path_dir.length());
+      std::string file = path.substr(real_path_dir.length());
 
       if (file.size() <= 4) {
         return;
@@ -11504,7 +11496,7 @@ dberr_t Tablespace_dirs::scan(bool populate_fil_cache) {
   }
 
   /* Rename all old partition files. */
-  fil_system->rename_partition_files(false);
+  //  fil_system->rename_partition_files(false);
 
   if (print_msg) {
     ib::info(ER_IB_MSG_381) << "Found " << ibd_files.size() << " '.ibd' and "
