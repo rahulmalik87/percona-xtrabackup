@@ -7435,16 +7435,6 @@ static void get_table_parts(const std::string &dict_name, std::string &schema,
       to_lower(sub_part);
     }
 
-#ifdef UNIV_DEBUG
-    /* Validate that the names are in lower case. */
-    std::string save_part(part);
-    to_lower(part);
-    ut_ad(save_part.compare(part) == 0);
-
-    std::string save_sub_part(sub_part);
-    to_lower(sub_part);
-    ut_ad(save_sub_part.compare(sub_part) == 0);
-#endif  // UNIV_DEBUG
 
     /* Build partition string. No conversion required. */
     partition.clear();
