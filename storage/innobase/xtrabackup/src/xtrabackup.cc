@@ -2735,7 +2735,7 @@ bool check_if_skip_table(
                                      tables_include_hash)) {
     return (false);
   }
-  if ((eptr = strstr(buf, "#P#")) != NULL) {
+  if ((eptr = strcasestr(buf, "#P#")) != NULL) {
     *eptr = 0;
 
     if (check_if_table_matches_filters(buf, regex_exclude_list,
