@@ -375,7 +375,7 @@ ulint get_innobase_type_from_dd(const dd::Column *col, ulint &unsigned_type) {
 dict_table_t *dd_table_create_on_dd_obj(const dd::Table *dd_table,
                                         const dd::Partition *dd_part,
                                         const dd::String_type *schema_name,
-                                        bool is_implicit) {
+                                        bool is_implicit, space_id_t space_id) {
   using namespace dict_name;
   mem_heap_t *heap = mem_heap_create(1000);
 
@@ -387,13 +387,35 @@ dict_table_t *dd_table_create_on_dd_obj(const dd::Table *dd_table,
                         MAX_DATABASE_NAME_LEN + 1);
   tablename_to_filename(dd_table->name().c_str(), tmp_tablename,
                         MAX_TABLE_NAME_LEN + 1);
+
   if (dd_part) {
-    if (dd_part->parent_partition() == nullptr) {
-      snprintf(table_name, sizeof table_name, "%s/%s#P#%s", tmp_schema,
-               tmp_tablename, dd_part->name().c_str());
+    fil_space_t *space = fil_space_get(space_id);
+    ut_ad(space != nullptr);
+
+    std::string file_table_name(space->name);
+
+    /* 8.0.19 and below can have upper case separators in partition
+    names, 8.0.20 and above have always lower case separators */
+    bool is_upper = false;
+    if (file_table_name.find("#P#") != std::string::npos) {
+      is_upper = true;
+    } else if (file_table_name.find("#p#") != std::string::npos) {
+      is_upper = false;
     } else {
-      snprintf(table_name, sizeof table_name, "%s/%s#P#%s#SP#%s", tmp_schema,
-               tmp_tablename, dd_part->name().c_str(),
+      /* This shouldn't happen, a partition should either have have
+      #P# or #p# in its name */
+      ut_ad(0);
+    }
+
+    if (dd_part->parent_partition() == nullptr) {
+      snprintf(table_name, sizeof table_name, "%s/%s%s%s", tmp_schema,
+               tmp_tablename, is_upper ? ALT_PART_SEPARATOR : PART_SEPARATOR,
+               dd_part->name().c_str());
+    } else {
+      snprintf(table_name, sizeof table_name, "%s/%s%s%s%s%s", tmp_schema,
+               tmp_tablename, is_upper ? ALT_PART_SEPARATOR : PART_SEPARATOR,
+               dd_part->name().c_str(),
+               is_upper ? ALT_SUB_PART_SEPARATOR : SUB_PART_SEPARATOR,
                dd_part->parent_partition()->name().c_str());
     }
   } else {
@@ -1047,10 +1069,11 @@ done:
   return (table_id);
 }
 
-int dd_table_load_part(table_id_t table_id, const dd::Table &dd_table,
-                       const dd::Partition *dd_part, dict_table_t *&table,
-                       THD *thd, const dd::String_type *schema_name,
-                       bool implicit) {
+static int dd_table_load_part(table_id_t table_id, const dd::Table &dd_table,
+                              const dd::Partition *dd_part,
+                              dict_table_t *&table, THD *thd,
+                              const dd::String_type *schema_name, bool implicit,
+                              space_id_t space_id) {
   const ulint fold = ut_fold_ull(table_id);
 
   ut_ad(table_id != dd::INVALID_OBJECT_ID);
@@ -1070,7 +1093,8 @@ int dd_table_load_part(table_id_t table_id, const dd::Table &dd_table,
     return (0);
   }
 
-  table = dd_table_create_on_dd_obj(&dd_table, dd_part, schema_name, implicit);
+  table = dd_table_create_on_dd_obj(&dd_table, dd_part, schema_name, implicit,
+                                    space_id);
 
   if (table != nullptr) {
     return (0);
@@ -1104,7 +1128,8 @@ int dd_table_open_on_dd_obj(dd::cache::Dictionary_client *client,
     return (0);
   }
 
-  table = dd_table_create_on_dd_obj(&dd_table, dd_part, schema_name, false);
+  table = dd_table_create_on_dd_obj(&dd_table, dd_part, schema_name, false,
+                                    space_id);
 
   if (table != nullptr) {
     return (0);
@@ -1126,7 +1151,7 @@ int dd_table_load_on_dd_obj(dd::cache::Dictionary_client *client,
     for (auto part : dd_table.leaf_partitions()) {
       uint64 tid = part->se_private_id();
       int ret = dd_table_load_part(tid, dd_table, part, table, thd, schema_name,
-                                   implicit);
+                                   implicit, space_id);
       if (ret != 0) {
         return ret;
       }
@@ -1136,7 +1161,7 @@ int dd_table_load_on_dd_obj(dd::cache::Dictionary_client *client,
   } else {
     const dd::Partition *dd_part = nullptr;
     int ret = dd_table_load_part(table_id, dd_table, dd_part, table, thd,
-                                 schema_name, implicit);
+                                 schema_name, implicit, space_id);
     if (ret != 0) {
       return ret;
     }
