@@ -11463,9 +11463,6 @@ dberr_t Tablespace_dirs::scan(bool populate_fil_cache) {
       ut_a(path.length() > real_path_dir.length());
       ut_a(Fil_path::get_file_type(path) != OS_FILE_TYPE_DIR);
 
-      /* Check if need to alter partition file names to lower case. */
-      std::string new_path;
-
       /* Make the filename relative to the directory that was scanned. */
       std::string file = path.substr(real_path_dir.length());
 
