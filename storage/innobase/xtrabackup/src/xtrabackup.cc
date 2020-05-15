@@ -5962,8 +5962,6 @@ static bool xb_export_cfg_write(
   strcpy(file_path, node->name);
   strcpy(file_path + strlen(file_path) - 4, ".cfg");
 
-  std::cout << "RAZ should write " << file_path << std::endl;
-
   file = fopen(file_path, "w+b");
 
   if (file == NULL) {
@@ -6465,7 +6463,6 @@ skip_check:
         continue;
       }
 
-      std::cout << "RAZ " << space->name << std::endl;
       table = dd_table_open_on_name(thd, NULL, space->name, false, true);
 
       mutex_enter(&(dict_sys->mutex));

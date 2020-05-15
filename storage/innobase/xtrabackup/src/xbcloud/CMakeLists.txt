@@ -62,3 +62,35 @@ TARGET_LINK_LIBRARIES(xbcloud
   crc
   )
 
+IF (WITH_DEBUG)
+
+  ENABLE_TESTING()
+
+  FIND_PACKAGE(GTest)
+
+  IF (GTEST_FOUND)
+
+    INCLUDE_DIRECTORIES(
+      ${GTEST_INCLUDE_DIRECTORIES}
+      )
+
+    ADD_EXECUTABLE(xbcloud-t xbcloud-t.cc
+      http.cc
+      s3.cc
+      swift.cc)
+
+    TARGET_LINK_LIBRARIES(xbcloud-t
+      ${GCRYPT_LIBS}
+      ${LIBEV_LIBRARIES}
+      ${CURL_LIBRARIES}
+      ${GTEST_BOTH_LIBRARIES}
+      gmock
+      mysys
+      crc
+      )
+
+    ADD_TEST(xbcloud xbcloud-t)
+
+  ENDIF()
+
+ENDIF()
