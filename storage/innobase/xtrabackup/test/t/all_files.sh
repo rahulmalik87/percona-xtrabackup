@@ -29,12 +29,6 @@ diff -u <( ( ( cd $dir1; find . | grep -Ev $ign_list )
 ./xtrabackup_tablespaces
 EOF
 
-if is_xtradb ; then
-    XTRA_DOUBLEWRITE="./xb_doublewrite"
-else
-    XTRA_DOUBLEWRITE=""
-fi
-
 # files that present in the datadir, but not present in the backup
 diff -B -u <( ( ( cd $dir1; find . | grep -Ev $ign_list )
                 ( cd $dir1; find . | grep -Ev $ign_list )
@@ -51,7 +45,6 @@ diff -B -u <( ( ( cd $dir1; find . | grep -Ev $ign_list )
 ./public_key.pem
 ./server-cert.pem
 ./server-key.pem
-${XTRA_DOUBLEWRITE}
 EOF
 
 }
@@ -91,7 +84,6 @@ diff -B -u <( ( ( cd $dir1; find . | grep -Ev $ign_list )
 ./public_key.pem
 ./server-cert.pem
 ./server-key.pem
-${XTRA_DOUBLEWRITE}
 EOF
 
 }
