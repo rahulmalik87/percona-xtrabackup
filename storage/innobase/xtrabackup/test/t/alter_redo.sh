@@ -15,7 +15,7 @@ mysql -e "INSERT INTO t SELECT * FROM t" test
 mysql -e "INSERT INTO t SELECT * FROM t" test
 
 while true ; do
-    mysql -e "INSERT INTO t SELECT * FROM t" test 2>/dev/null >/dev/null
+    mysql -e "INSERT INTO t SELECT * FROM t limit 100" test 2>/dev/null >/dev/null
 done &
 
 
