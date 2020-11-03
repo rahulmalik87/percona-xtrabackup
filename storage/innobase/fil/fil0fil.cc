@@ -10890,7 +10890,7 @@ byte *fil_tablespace_redo_extend(byte *ptr, const byte *end,
     return ptr;
   }
 
-#ifndef UNIV_HOTBACKUP
+#ifndef XTRABACKUP
   const auto result =
       fil_system->get_scanned_filename_by_space_id(page_id.space());
 
@@ -11006,7 +11006,7 @@ byte *fil_tablespace_redo_extend(byte *ptr, const byte *end,
   fil_flush(space->id);
 
   fil_space_close(space->id);
-#endif /* !UNIV_HOTBACKUP */
+#endif /* !XTRABACKUP*/
 
   return ptr;
 }
