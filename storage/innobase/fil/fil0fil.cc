@@ -10870,7 +10870,7 @@ byte *fil_tablespace_redo_extend(byte *ptr, const byte *end,
   }
 
   /* Offset within the file to start writing zeros */
-  os_offset_t offset = mach_read_from_8(ptr);
+  // os_offset_t offset = mach_read_from_8(ptr);
   ptr += 8;
 
   /* Size of the space which needs to be initialized by
