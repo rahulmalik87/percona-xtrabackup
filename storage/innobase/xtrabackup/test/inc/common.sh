@@ -306,7 +306,7 @@ replicate-ignore-db=mysql
 replicate-ignore-db=performance_schema
 replicate-ignore-db=sys
 innodb_log_file_size=48M
-innodb_extend_and_initialize=OFF
+loose_innodb_extend_and_initialize=OFF
 ${MYSQLD_EXTRA_MY_CNF_OPTS:-}
 #core-file
 
