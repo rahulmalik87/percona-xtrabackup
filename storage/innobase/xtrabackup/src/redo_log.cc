@@ -1053,6 +1053,7 @@ void Redo_Log_Data_Manager::track_archived_log(lsn_t start_lsn, const byte *buf,
             "LSN: " LSN_PF "\n",
             start_lsn);
         archived_log_monitor.get_reader().set_start_lsn(start_lsn);
+        msg("xtrabackup: lsn set is ");
         archived_log_state = ARCHIVED_LOG_MATCHED;
       }
     }
@@ -1064,6 +1065,7 @@ void Redo_Log_Data_Manager::track_archived_log(lsn_t start_lsn, const byte *buf,
       archived_log_state = ARCHIVED_LOG_POSITIONED;
     }
   }
+  msg("xtrabackup: end of  track_archived_log");
 }
 
 bool Redo_Log_Data_Manager::copy_once(bool is_last, bool *finished) {
@@ -1111,6 +1113,7 @@ bool Redo_Log_Data_Manager::copy_once(bool is_last, bool *finished) {
                         reader.get_start_checkpoint_lsn())) {
     return (false);
   }
+  msg("xtrabackup: parsing is done");
 
   if (!writer.write_buffer(reader.get_buffer(), len)) {
     return (false);
