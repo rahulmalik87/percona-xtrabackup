@@ -3971,6 +3971,10 @@ dberr_t row_merge_build_indexes(
     /* Close the temporary file to free up space. */
     row_merge_file_destroy(&merge_files[i]);
 
+    if (error == DB_SUCCESS) {
+      row_merge_write_redo(indexes[i]);
+    }
+
     if (indexes[i]->type & DICT_FTS) {
       row_fts_psort_info_destroy(psort_info, merge_info);
       fts_psort_initiated = false;
@@ -3983,7 +3987,6 @@ dberr_t row_merge_build_indexes(
       ut_ad(need_flush_observer);
 
       flush_observer->flush();
-      row_merge_write_redo(indexes[i]);
 
       DEBUG_SYNC_C("row_log_apply_before");
       error = row_log_apply(trx, sort_idx, table, stage);
