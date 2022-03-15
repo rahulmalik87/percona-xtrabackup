@@ -2088,7 +2088,10 @@ char *make_argv(char *buf, size_t len, int argc, char **argv)
 		if (strncmp(*argv, "--password", strlen("--password")) == 0) {
 			arg = "--password=...";
 		}
-		if (strncmp(*argv, "--encrypt-key",
+                if (strncmp(*argv, "-p", strlen("-p")) == 0) {
+                  arg = "-p...";
+                }
+                if (strncmp(*argv, "--encrypt-key",
 				strlen("--encrypt-key")) == 0) {
 			arg = "--encrypt-key=...";
 		}

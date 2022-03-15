@@ -59,6 +59,8 @@ function check_count()
 vlog "Prepping server"
 start_server
 load_dbase_schema incremental_sample
+mysql -e "CREATE USER pxb@localhost IDENTIFIED BY 'secretpwd'"
+mysql -e "GRANT ALL ON *.* TO pxb@localhost "
 multi_row_insert incremental_sample.test \({1..100},100\)
 backup_dir=$topdir/backups
 mkdir $backup_dir
@@ -181,7 +183,7 @@ vlog "Testing incremental based on history uuid"
 multi_row_insert incremental_sample.test \({301..400},100\)
 
 innobackupex --history --incremental --incremental-history-uuid=$third_uuid \
---stream=xbstream --compress --encrypt=AES256 \
+--stream=xbstream --compress -u pxb -psecretpwd --encrypt=AES256 \
 --encrypt-key=percona_xtrabackup_is_awesome___ --transition-key=percona \
 $backup_dir > /dev/null
 
@@ -201,8 +203,8 @@ check_for_value "name" "NULL"
 get_one_value "tool_command"
 val=`set -- $val; shift 2; echo "$@"`
 expected_val="--history --incremental "\
-"--incremental-history-uuid=$third_uuid --stream=xbstream --compress "\
-"--encrypt=AES256 --encrypt-key=... --transition-key=... $backup_dir"
+"--incremental-history-uuid=$third_uuid --stream=xbstream --compress -u pxb "\
+"-p... --encrypt=AES256 --encrypt-key=... --transition-key=... $backup_dir"
 
 if [ -z "$val" ] || [ "$val" != "$expected_val" ]
 then
