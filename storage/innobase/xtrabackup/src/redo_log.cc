@@ -88,17 +88,6 @@ bool Redo_Log_Reader::find_start_checkpoint_lsn() {
   return (true);
 }
 
-bool Redo_Log_Reader::validate_redo_log_file() {
-  /* Look for the latest checkpoint */
-  Log_checkpoint_location checkpoint;
-
-  if (!recv_find_max_checkpoint(*log_sys, checkpoint)) {
-    xb::error() << " recv_find_max_checkpoint() failed.";
-    return (false);
-  }
-  return (true);
-}
-
 byte *Redo_Log_Reader::get_header() const { return log_hdr_buf; }
 
 byte *Redo_Log_Reader::get_buffer() const { return log_buf; }
@@ -511,7 +500,7 @@ bool Redo_Log_Writer::close_logfile() {
 
 /* set encryption info of redo log on io request */
 static void set_encryption_info(IORequest &req_type) {
-  auto encryption_metadata = log_sys->m_encryption_metadata;
+  auto& encryption_metadata = log_sys->m_encryption_metadata;
   ut_ad(encryption_metadata.m_type != Encryption::NONE);
   req_type.encryption_algorithm(encryption_metadata.m_type);
   req_type.encryption_key(encryption_metadata.m_key,
@@ -1165,10 +1154,10 @@ bool Redo_Log_Data_Manager::stop_at(lsn_t lsn, lsn_t checkpoint_lsn) {
 
   archived_log_monitor.stop();
 
-  /* check if redo log are disabled */
-  if (!reader.validate_redo_log_file()) {
-    return (false);
-  }
+  /* to ensure redo logs are not disabled during the backup, reopen the log
+  files to read HEADER */
+  reopen_log_files();
+  log_crash_safe_validate(*log_sys);
 
   scanned_lsn = reader.get_scanned_lsn();
 
