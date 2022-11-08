@@ -7028,6 +7028,14 @@ static void xtrabackup_prepare_func(int argc, char **argv) {
   IORequest write_request(IORequest::WRITE);
 
   read_metadata();
+  if (strcmp(metadata_type_str, "log-applied") == 0 &&
+      !xtrabackup_incremental) {
+    xb::error() << "Backup is already prepared. The final incremental should "
+                   "be prepared without --apply-log-only. or if you restoring "
+                   "full backup, It should be only prepare without option "
+                   "--apply-log-only";
+    exit(EXIT_FAILURE);
+  }
 
   /* read xtrabackup_info file only in the case of export since we need the
    * server version */
