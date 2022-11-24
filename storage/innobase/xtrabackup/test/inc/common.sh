@@ -6,7 +6,7 @@ function save_backup()
   local targetdir=$1
   local backupdir=$(mktemp -d ${topdir}/backup.XXXXX)
   vlog "saving copy of $targetdir to ${backupdir}"
-  cp -R "${targetdir}/" ${backupdir}
+  run_cmd cp -R "${targetdir}/" ${backupdir}
 }
 
 function xtrabackup()
