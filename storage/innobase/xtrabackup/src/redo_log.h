@@ -246,8 +246,9 @@ class Archived_Redo_Log_Monitor {
   /** Get first log block checksum from the archived redo log. */
   uint32_t get_first_log_block_checksum() const;
 
-  /** Read archived log until the given log block. */
-  void skip_for_block(lsn_t lsn, const byte *redo_buf);
+  /** Read archived log until the given log block.
+   @return true if no error occured or false if error occured */
+  bool skip_for_block(lsn_t lsn, const byte *redo_buf);
 
  private:
   /** Parse the value of innodb_redo_log_archive_dirs. */
@@ -327,8 +328,9 @@ class Redo_Log_Data_Manager {
   bool copy_once(bool is_last, bool *finished);
 
   /** Compare archived log block number and lsn with the current lsn
-      and seek archived log if needed. */
-  void track_archived_log(lsn_t start_lsn, const byte *buf, size_t len);
+      and seek archived log if needed.
+     @return true if no error occured or false if error occured */
+  bool track_archived_log(lsn_t start_lsn, const byte *buf, size_t len);
 
   /** copying thread. */
   IB_thread thread;

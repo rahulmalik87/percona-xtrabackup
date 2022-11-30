@@ -54,7 +54,9 @@ function run_test() {
 
   if ! grep -q "Archived redo log has caught up" $topdir/backup.log ; then
       if ! grep -q "Switched to archived redo log starting with LSN" $topdir/backup.log ; then
+	if ! grep -q "Finished reading archive" $topdir/bakup.log; then
 	  die "Archived logs were not used"
+	fi
       fi
   fi
 

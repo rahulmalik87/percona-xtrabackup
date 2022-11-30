@@ -126,7 +126,6 @@ bool Redo_Log_Reader::is_error() const { return (m_error); }
 /** scan redo log files form server directory and update log.m_files.
 @param[in,out]  desired_lsn             LSN that triggered file reopening.
 @return true if re-open was sucessful */
-
 static bool reopen_log_files(lsn_t desired_lsn) {
   log_t &log = *log_sys;
 
@@ -149,16 +148,18 @@ static bool reopen_log_files(lsn_t desired_lsn) {
   log.m_files = std::move(files);
   if (log.m_files.ctx().m_files_ruleset == Log_files_ruleset::CURRENT) {
     auto file = log.m_files.find(desired_lsn);
-    if (file == log.m_files.end()) return false;
+    if (file == log.m_files.end()) {
+      return false;
+    }
     if (log_encryption_read(log, *file) != DB_SUCCESS) {
       xb::error() << "log_encryption_read failed on file ID " << file->m_id;
-      return (false);
+      return false;
     };
   } else {
     const auto logfile0 = log.m_files.file(0);
     if (log_encryption_read(log, *logfile0) != DB_SUCCESS) {
       xb::error() << "log_encryption_read failed on file ID 0";
-      return (false);
+      return false;
     };
   }
 
@@ -179,12 +180,15 @@ lsn_t Redo_Log_Reader::read_log_seg_pre8030(log_t &log, byte *buf,
     Log_file_id file_id = source_offset / file_size;
 
     auto file = log.m_files.file(file_id);
+    if (file != log.m_files.end()) {
+      xb::error() << "Failed to find redo file id " << file_id;
+      return 0;
+    }
 
     auto file_handle = file->open(Log_file_access_mode::READ_ONLY);
 
     if (!file_handle.is_open()) {
-      // file not found
-      m_error = true;
+      xb::error() << "Failed to open redo file id " << file_id;
       return 0;
     }
 
@@ -225,27 +229,21 @@ lsn_t Redo_Log_Reader::read_log_seg_8030(log_t &log, byte *buf, lsn_t start_lsn,
                                     lsn_t end_lsn) {
   ut_a(start_lsn < end_lsn);
 
-  // update the in-memory structure log files by scanning
   if (log.m_files.find(start_lsn) == log.m_files.end()) {
-    if (!reopen_log_files(start_lsn)) {
-      // file not found
-      m_error = true;
+    // update the in-memory structure log files by scanning
+    if (!reopen_log_files(start_lsn) ||
+        log.m_files.find(start_lsn) == log.m_files.end()) {
+      xb::error() << "Cannot find redo file with LSN " << start_lsn;
       return 0;
     }
   }
 
   auto file = log.m_files.find(start_lsn);
-  if (file == log.m_files.end()) {
-    // file not found
-    m_error = true;
-    return 0;
-  }
 
   auto file_handle = file->open(Log_file_access_mode::READ_ONLY);
 
   if (!file_handle.is_open()) {
-    // file not found
-    m_error = true;
+    xb::error() << "Failed to open redo file " << file->m_id;
     return 0;
   }
 
@@ -291,7 +289,10 @@ lsn_t Redo_Log_Reader::read_log_seg_8030(log_t &log, byte *buf, lsn_t start_lsn,
       file = next_file;
 
       file_handle = file->open(Log_file_access_mode::READ_ONLY);
-      ut_a(file_handle.is_open());
+      if (!file_handle.is_open()) {
+        xb::error() << "Failed to open redo file " << file->m_id;
+        return 0;
+      }
     }
 
   } while (start_lsn != end_lsn);
@@ -325,15 +326,23 @@ ssize_t Redo_Log_Reader::read_logfile(bool is_last, bool *finished) {
     const lsn_t end_lsn =
         read_log_seg(log, log_buf + len, start_lsn, start_lsn + RECV_SCAN_SIZE);
 
-    auto size = scan_log_recs(log_buf + len, is_last, start_lsn, &scanned_lsn,
-                              log_scanned_lsn, finished);
-    if (end_lsn == start_lsn) {
-      break;
+    if (end_lsn == 0) {
+      xb::error() << "read_log_seg() failed.";
+      m_error = true;
+      return (-1);
     }
 
-    if (size < 0 || end_lsn == 0) {
-      xb::error() << "read_logfile() failed.";
+    auto size = scan_log_recs(log_buf + len, is_last, start_lsn, &scanned_lsn,
+                              log_scanned_lsn, finished);
+
+    if (size < 0) {
+      xb::error() << "scan_log_recs() failed.";
+      m_error = true;
       return (-1);
+    }
+
+    if (end_lsn == start_lsn) {
+      break;
     }
 
     start_lsn = end_lsn;
@@ -864,7 +873,7 @@ uint32_t Archived_Redo_Log_Monitor::get_first_log_block_checksum() const {
   return first_log_block_checksum;
 }
 
-void Archived_Redo_Log_Monitor::skip_for_block(lsn_t lsn,
+bool Archived_Redo_Log_Monitor::skip_for_block(lsn_t lsn,
                                                const byte *redo_buf) {
   bool finished = false;
   lsn_t bytes_read = OS_FILE_LOG_BLOCK_SIZE;
@@ -875,6 +884,8 @@ void Archived_Redo_Log_Monitor::skip_for_block(lsn_t lsn,
 
   while (true) {
     auto len = reader.read_logfile(&finished);
+    if (len < 0) return false;
+
     for (auto ptr = reader.get_buffer(); ptr < reader.get_buffer() + len;
          ptr += OS_FILE_LOG_BLOCK_SIZE, bytes_read += OS_FILE_LOG_BLOCK_SIZE) {
       auto arch_block_no = log_block_get_hdr_no(ptr);
@@ -889,14 +900,15 @@ void Archived_Redo_Log_Monitor::skip_for_block(lsn_t lsn,
        redo_block_len != arch_block_len)) {
     xb::info() << "Archived redo log has caught up";
     reader.set_start_lsn(lsn - bytes_read);
-    return;
+    return true;
       }
     }
     if (finished) {
       xb::info() << "Finished reading archive, did not find a matching block";
-      return;
+      return true;
     }
   }
+  return true;
 }
 
 void Archived_Redo_Log_Monitor::parse_archive_dirs(const std::string &s) {
@@ -1251,17 +1263,17 @@ bool Redo_Log_Data_Manager::start() {
   return (true);
 }
 
-void Redo_Log_Data_Manager::track_archived_log(lsn_t start_lsn, const byte *buf,
+bool Redo_Log_Data_Manager::track_archived_log(lsn_t start_lsn, const byte *buf,
                                                size_t len) {
   if (!archived_log_monitor.is_ready() ||
       archived_log_state == ARCHIVED_LOG_MATCHED) {
-    return;
+    return true;
   }
 
   if (archived_log_state == ARCHIVED_LOG_NONE) {
     auto no = log_block_get_hdr_no(buf);
     if (no > archived_log_monitor.get_first_log_block_no()) {
-      archived_log_monitor.skip_for_block(start_lsn, buf);
+      if (!archived_log_monitor.skip_for_block(start_lsn, buf)) return false;
       archived_log_state = ARCHIVED_LOG_MATCHED;
     }
   }
@@ -1287,6 +1299,7 @@ void Redo_Log_Data_Manager::track_archived_log(lsn_t start_lsn, const byte *buf,
       archived_log_state = ARCHIVED_LOG_POSITIONED;
     }
   }
+  return true;
 }
 
 bool Redo_Log_Data_Manager::copy_once(bool is_last, bool *finished) {
@@ -1329,7 +1342,11 @@ bool Redo_Log_Data_Manager::copy_once(bool is_last, bool *finished) {
     return (len == 0);
   }
 
-  track_archived_log(start_lsn, reader.get_buffer(), len);
+  if (!track_archived_log(start_lsn, reader.get_buffer(), len)) {
+    error = reader.is_error();
+    xb::error() << "Failed to setup redo archive ";
+    return false;
+  }
 
   if (!parser.parse_log(reader.get_buffer(), len, start_lsn)) {
     return (false);
@@ -1439,7 +1456,7 @@ bool Redo_Log_Data_Manager::stop_at(lsn_t lsn, lsn_t checkpoint_lsn) {
   /* to ensure redo logs are not disabled during the backup, reopen the log
   files to read HEADER */
   if (!reopen_log_files(lsn)) {
-    xb::error() << "Cannot find file with LSN " << lsn;
+    xb::error() << "Cannot find redo file with LSN " << lsn;
     return (false);
   }
   log_crash_safe_validate(*log_sys);
