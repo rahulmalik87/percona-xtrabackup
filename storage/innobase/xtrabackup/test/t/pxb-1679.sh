@@ -27,26 +27,17 @@ CREATE TABLE test02 (id int auto_increment primary key, a TEXT, b TEXT);
 INSERT INTO test02 SELECT * FROM test01;
 EOF
 
-xtrabackup --backup --lock-ddl=false --target-dir=$topdir/backup 2>&1 | tee /dev/stderr | \
-    while read line ; do
-        echo $line
-        if [ $( echo $line | grep -i -c './test/test01#p#p3.ibd') -eq 1 ]; then
-            mysql -e "ALTER TABLE test01 TRUNCATE PARTITION p3" test
-        fi
-        if [ $( echo $line | grep -c './test/test02.ibd') -eq 1 ]; then
-            mysql -e "TRUNCATE TABLE test02" test
-        fi
-    done
-
-if ! [ ${PIPESTATUS[0]} -eq 0 ] ; then
-    die "backup failed"
-fi
-
+xtrabackup --backup --target-dir=$topdir/backup  
+mysql -e "ALTER TABLE test01 TRUNCATE PARTITION p3" test
+mysql -e "TRUNCATE TABLE test02" test
 record_db_state test
+xtrabackup --backup --target-dir=$topdir/incremental --incremental-basedir=$topdir/backup  
 
 shutdown_server
 
-xtrabackup --prepare --target-dir=$topdir/backup
+xtrabackup --prepare --target-dir=$topdir/backup --apply-log-only
+xtrabackup --prepare --target-dir=$topdir/backup --incremental-dir=$topdir/incremental
+
 rm -rf $mysql_datadir
 xtrabackup --copy-back --target-dir=$topdir/backup
 
