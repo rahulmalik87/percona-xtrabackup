@@ -562,6 +562,20 @@ inline uint32_t log_block_convert_lsn_to_hdr_no(lsn_t lsn) {
          static_cast<uint32_t>(lsn / OS_FILE_LOG_BLOCK_SIZE % LOG_BLOCK_MAX_NO);
 }
 
+/* convert hdr to LSN
+@param[in] header log_block_number
+@param[in] start_lsn the current start_LSN set in system
+@return LSN number */
+inline lsn_t log_block_convert_hdr_to_lsn_no(uint32_t header, lsn_t start_lsn) {
+  ut_ad(header <= LOG_BLOCK_MAX_NO);
+
+  uint32_t round_off =
+      static_cast<uint32_t>(start_lsn / OS_FILE_LOG_BLOCK_SIZE /
+                            LOG_BLOCK_MAX_NO) +
+      1;
+  return header * OS_FILE_LOG_BLOCK_SIZE * round_off - OS_FILE_LOG_BLOCK_SIZE;
+}
+
 /** Calculates the checksum for a log block.
 @param[in]	log_block	log block
 @return checksum */

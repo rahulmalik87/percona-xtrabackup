@@ -4151,6 +4151,32 @@ static
   return end_lsn;
 }
 
+#ifdef XTRABACKUP
+/* recalucate file start_lsn by scanning the first block
+and calculationg the start LSN
+@param[in,out]  log                     redo log
+@param[in,out]  checkpoint_lsn          log sequence number found in checkpoint
+header
+*/
+inline static void recalculate_redo_start_lsn(log_t &log, lsn_t start_lsn) {
+  auto file = log.m_files.find(start_lsn);
+  auto file_handle = file->open(Log_file_access_mode::READ_ONLY);
+
+  /* read the first redo block and find out it heder number */
+  const dberr_t err = log_data_blocks_read(file_handle, LOG_FILE_HDR_SIZE,
+                                           OS_FILE_LOG_BLOCK_SIZE, log.buf);
+  ut_a(err == DB_SUCCESS);
+  Log_data_block_header block_header;
+  log_data_block_header_deserialize(log.buf, block_header);
+
+  /* Question Can we still go wrong in calcuating start_lsn */
+  auto calculated_lsn =
+      log_block_convert_hdr_to_lsn_no(block_header.m_hdr_no, start_lsn);
+
+  log.m_files.set_lsn(log.m_current_file.m_id, calculated_lsn);
+}
+#endif
+
 /** Scans log from a buffer and stores new log data to the parsing buffer.
 Parses and hashes the log records if new data found.
 @param[in,out]  log                     redo log
@@ -4391,6 +4417,14 @@ dberr_t recv_recovery_from_checkpoint_start(log_t &log, lsn_t flush_lsn,
       }
     }
   }
+
+#ifdef XTRABACKUP
+  /* PXB 8.0.30 could calculate start_lsn as wrong, later version of PXB stopre
+   start_lsn in chekpoint file */
+  if (!srv_backup_mode) {
+    recalculate_redo_start_lsn(log, checkpoint_lsn);
+  }
+#endif
 
   err = recv_recovery_begin(log, checkpoint_lsn, to_lsn);
   if (err != DB_SUCCESS) {

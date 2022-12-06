@@ -5039,10 +5039,8 @@ static void xtrabackup_stats_func(int argc, char **argv) {
 
 /* ================= prepare ================= */
 
-static void update_log_temp_checkpoint(byte *buf, lsn_t lsn) {
+void update_log_temp_checkpoint(byte *buf, lsn_t lsn) {
   /* Overwrite the both checkpoint area. */
-
-
   mach_write_to_8(buf + LOG_CHECKPOINT_1 + LOG_CHECKPOINT_LSN, lsn);
   mach_write_to_8(buf + LOG_CHECKPOINT_2 + LOG_CHECKPOINT_LSN, lsn);
 

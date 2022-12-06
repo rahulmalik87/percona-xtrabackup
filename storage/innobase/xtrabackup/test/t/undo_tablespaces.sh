@@ -65,15 +65,14 @@ xtrabackup --backup --target-dir=$topdir/inc --incremental-basedir=$topdir/backu
 kill -SIGKILL $job_master
 stop_server
 
+xtrabackup --prepare --apply-log-only --target-dir=$topdir/backup
+xtrabackup --prepare --target-dir=$topdir/backup --incremental-dir=$topdir/inc
+
 rm -rf $MYSQLD_DATADIR/*
 rm -rf $undo_directory/*
 rm -rf $undo_directory_ext/*
 
-xtrabackup --prepare --apply-log-only --target-dir=$topdir/backup
-xtrabackup --prepare --target-dir=$topdir/backup --incremental-dir=$topdir/inc
-
 xtrabackup --copy-back --target-dir=$topdir/backup
-
 
 for file in $undo_directory/undo1.ibu $undo_directory/undo2.ibu \
         $undo_directory/undo3.ibu $undo_directory/undo4.ibu ; do
