@@ -2174,17 +2174,13 @@ cleanup:
 bool
 decrypt_decompress_file(const char *filepath, uint thread_n)
 {
-	std::stringstream cmd, message;
-	char buf[FN_LEN];
+	std::stringstream cmd, message,input_file,output_file;
 	bool needs_action = false;
 
-        if (escape_string_for_mysql(&my_charset_utf8mb4_general_ci, buf, 0,
-                                    filepath, strlen(filepath)) == (size_t)-1) {
-          msg_ts("[%02u] Error escaping file: %s\n", thread_n, filepath);
-          return false;
-        }
-        char *dest_filepath = strdup(buf);
-	cmd << "cat " << SQUOTE(buf);
+        char *dest_filepath = strdup(filepath);
+	input_file << "xbinputfile" << thread_n;
+	setenv(input_file.str().c_str(), filepath, 1);
+	cmd << "cat \"$" << input_file.str().c_str() << "\"";
 
  	if (ends_with(filepath, ".xbcrypt") && opt_decrypt) {
  		cmd << " | xbcrypt --decrypt --encrypt-algo="
@@ -2210,9 +2206,11 @@ decrypt_decompress_file(const char *filepath, uint thread_n)
  		message << "decompressing";
  		needs_action = true;
  	}
+	message << " " << filepath;
 
-	cmd << " > " << SQUOTE(dest_filepath);
- 	message << " " << filepath;
+        output_file << "xboutputfile" << thread_n;
+	setenv(output_file.str().c_str(), dest_filepath, 1);
+	cmd << " >\"$" << output_file.str().c_str() << "\"";
 
  	free(dest_filepath);
 
