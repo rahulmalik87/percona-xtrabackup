@@ -2176,14 +2176,13 @@ decrypt_decompress_file(const char *filepath, uint thread_n)
 {
 	std::stringstream cmd, message,input_file,output_file;
 	bool needs_action = false;
-	int env_error;
 
         char *dest_filepath = strdup(filepath);
 	input_file << "xbinputfile" << thread_n;
-	env_error = setenv(input_file.str().c_str(), filepath, 1);
-	if (env_error != 0) {
-		msg("Can not set env %s: got error %d\n",
-				input_file.str().c_str(), env_error);
+	if (setenv(input_file.str().c_str(), filepath, 1) == -1) {
+		int errsv = errno;
+		msg_ts("[%02u] Can not set env %s: to %s got error %d\n",
+			thread_n, input_file.str().c_str(), filepath, errsv);
 		return false;
 	}
 
@@ -2214,12 +2213,13 @@ decrypt_decompress_file(const char *filepath, uint thread_n)
  		needs_action = true;
  	}
 	message << " " << filepath;
-
         output_file << "xboutputfile" << thread_n;
-	env_error = setenv(output_file.str().c_str(), dest_filepath, 1);
-	if (env_error != 0) {
-		msg("Can not set env %s: got error %d\n",
-				output_file.str().c_str(), env_error);
+
+	if (setenv(output_file.str().c_str(), dest_filepath, 1) == -1) {
+		int errsv = errno;
+		msg_ts("[%02u] Can not set env %s: to %s got error %d\n",
+				thread_n, output_file.str().c_str(),
+				dest_filepath, errsv);
 		return false;
 	}
 	cmd << " >\"$" << output_file.str().c_str() << "\"";
