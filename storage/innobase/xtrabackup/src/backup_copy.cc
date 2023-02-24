@@ -2185,7 +2185,7 @@ decrypt_decompress_file(const char *filepath, uint thread_n)
 			thread_n, input_file.str().c_str(), filepath, errsv);
 		return false;
 	}
-
+	/*cmd will be cat $xbinputfile1 */
 	cmd << "cat \"$" << input_file.str().c_str() << "\"";
 
  	if (ends_with(filepath, ".xbcrypt") && opt_decrypt) {
