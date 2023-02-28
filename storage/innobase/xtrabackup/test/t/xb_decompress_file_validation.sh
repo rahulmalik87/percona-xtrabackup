@@ -17,3 +17,8 @@ if grep -q 'secret_text_not_to_be_printed' $topdir/pxb.log
 then
 	die "xtrabackup should not print this warning"
 fi
+
+if ! grep -q 'completed OK' $topdir/pxb.log
+then
+	die "test failed"
+fi

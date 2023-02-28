@@ -2177,16 +2177,15 @@ decrypt_decompress_file(const char *filepath, uint thread_n)
 	std::stringstream cmd, message,input_file,output_file;
 	bool needs_action = false;
 
-        char *dest_filepath = strdup(filepath);
-	input_file << "xbinputfile" << thread_n;
+	char *dest_filepath = strdup(filepath);
+	input_file << "PXBINFILE" << thread_n;
 	if (setenv(input_file.str().c_str(), filepath, 1) == -1) {
 		int errsv = errno;
 		msg_ts("[%02u] Can not set env %s: to %s got error %d\n",
 			thread_n, input_file.str().c_str(), filepath, errsv);
 		return false;
 	}
-	/*cmd will be cat $xbinputfile1 */
-	cmd << "cat \"$" << input_file.str().c_str() << "\"";
+        cmd << "cat \"$" << input_file.str().c_str() << "\"";
 
  	if (ends_with(filepath, ".xbcrypt") && opt_decrypt) {
  		cmd << " | xbcrypt --decrypt --encrypt-algo="
@@ -2213,9 +2212,8 @@ decrypt_decompress_file(const char *filepath, uint thread_n)
  		needs_action = true;
  	}
 	message << " " << filepath;
-        output_file << "xboutputfile" << thread_n;
-
-	if (setenv(output_file.str().c_str(), dest_filepath, 1) == -1) {
+        output_file << "PXBOUTFILE" << thread_n;
+        if (setenv(output_file.str().c_str(), dest_filepath, 1) == -1) {
 		int errsv = errno;
 		msg_ts("[%02u] Can not set env %s: to %s got error %d\n",
 				thread_n, output_file.str().c_str(),
@@ -2230,7 +2228,8 @@ decrypt_decompress_file(const char *filepath, uint thread_n)
 
 		msg_ts("[%02u] %s\n", thread_n, message.str().c_str());
 
-	 	if (system(cmd.str().c_str()) != 0) {
+		/* cat $XBINFILE|xbcrtyp --decrpyt|qpress -dio > $XBOUTFILE */
+		if (system(cmd.str().c_str()) != 0) {
 	 		return(false);
 	 	}
 
