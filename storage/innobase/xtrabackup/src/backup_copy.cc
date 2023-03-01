@@ -2229,11 +2229,15 @@ decrypt_decompress_file(const char *filepath, uint thread_n)
 		msg_ts("[%02u] %s\n", thread_n, message.str().c_str());
 
                 /* cat $XBINFILE|xbcrypt --decrpyt|qpress -dio > $XBOUTFILE */
-                if (system(cmd.str().c_str()) != 0) {
-	 		return(false);
-	 	}
+                int ret_status = system(cmd.str().c_str());
+                if (ret_status != 0) {
+			msg_ts("[%02u] Can not run %s on %s got error %d\n",
+					thread_n, cmd.str().c_str(),filepath,
+					ret_status);
+			return false;
+                }
 
-	 	if (opt_remove_original) {
+                if (opt_remove_original) {
 	 		msg_ts("[%02u] removing %s\n", thread_n, filepath);
 	 		if (my_delete(filepath, MYF(MY_WME)) != 0) {
 	 			return(false);
