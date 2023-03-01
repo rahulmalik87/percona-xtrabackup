@@ -2174,7 +2174,7 @@ cleanup:
 bool
 decrypt_decompress_file(const char *filepath, uint thread_n)
 {
-	std::stringstream cmd, message,input_file,output_file;
+	std::stringstream cmd, message, input_file, output_file;
 	bool needs_action = false;
 
 	char *dest_filepath = strdup(filepath);
@@ -2228,8 +2228,8 @@ decrypt_decompress_file(const char *filepath, uint thread_n)
 
 		msg_ts("[%02u] %s\n", thread_n, message.str().c_str());
 
-		/* cat $XBINFILE|xbcrtyp --decrpyt|qpress -dio > $XBOUTFILE */
-		if (system(cmd.str().c_str()) != 0) {
+                /* cat $XBINFILE|xbcrypt --decrpyt|qpress -dio > $XBOUTFILE */
+                if (system(cmd.str().c_str()) != 0) {
 	 		return(false);
 	 	}
 
