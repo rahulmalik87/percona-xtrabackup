@@ -2178,7 +2178,7 @@ decrypt_decompress_file(const char *filepath, uint thread_n)
 	bool needs_action = false;
 
 	char *dest_filepath = strdup(filepath);
-	input_file << "PXBINFILE" << thread_n;
+	input_file << "PXBINFILE" << thread_n << "p" << getpid();
 	if (setenv(input_file.str().c_str(), filepath, 1) == -1) {
 		int errsv = errno;
 		msg_ts("[%02u] Can not set env %s: to %s got error %d\n",
@@ -2212,7 +2212,7 @@ decrypt_decompress_file(const char *filepath, uint thread_n)
  		needs_action = true;
  	}
 	message << " " << filepath;
-        output_file << "PXBOUTFILE" << thread_n;
+        output_file << "PXBOUTFILE" << thread_n << "p" << getpid();
         if (setenv(output_file.str().c_str(), dest_filepath, 1) == -1) {
 		int errsv = errno;
 		msg_ts("[%02u] Can not set env %s: to %s got error %d\n",
