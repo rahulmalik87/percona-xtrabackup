@@ -2234,6 +2234,10 @@ decrypt_decompress_file(const char *filepath, uint thread_n)
 			msg_ts("[%02u] Can not run %s on %s got error %d\n",
 					thread_n, cmd.str().c_str(),filepath,
 					ret_status);
+			msg_ts("[%02u] Enviorment variable are %s and %s \n",
+					thread_n, getenv(input_file.str().c_str()),
+					getenv(output_file.str().c_str()));
+
 			return false;
                 }
 
