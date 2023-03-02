@@ -2172,39 +2172,40 @@ cleanup:
 }
 
 bool
-decrypt_decompress_file(const char *filepath, uint thread_n)
+decrypt_decompress_file(const std::string filepath, uint thread_n)
 {
 	std::stringstream cmd, message, input_file, output_file;
 	bool needs_action = false;
 
-	char *dest_filepath = strdup(filepath);
+	std::string dest_filepath = filepath;
 	input_file << "PXBINFILE" << thread_n << "p" << getpid();
-	if (setenv(input_file.str().c_str(), filepath, 1) == -1) {
+	if (setenv(input_file.str().c_str(), filepath.c_str(), 1) == -1) {
 		int errsv = errno;
 		msg_ts("[%02u] Can not set env %s: to %s got error %d\n",
-			thread_n, input_file.str().c_str(), filepath, errsv);
+				thread_n, input_file.str().c_str(),
+				filepath.c_str(), errsv);
 		return false;
 	}
         cmd << "cat \"$" << input_file.str().c_str() << "\"";
 
- 	if (ends_with(filepath, ".xbcrypt") && opt_decrypt) {
+ 	if (ends_with(filepath.c_str(), ".xbcrypt") && opt_decrypt) {
  		cmd << " | xbcrypt --decrypt --encrypt-algo="
  		    << xtrabackup_encrypt_algo_names[opt_decrypt_algo];
  		if (xtrabackup_encrypt_key == NULL) {
  			cmd << " --encrypt-key-file="
  			    << xtrabackup_encrypt_key_file;
  		}
- 		dest_filepath[strlen(dest_filepath) - 8] = 0;
+		dest_filepath = dest_filepath.substr(0,dest_filepath.size() -8);
  		message << "decrypting";
  		needs_action = true;
  	}
 
  	if (opt_decompress
- 	    && (ends_with(filepath, ".qp")
-		|| (ends_with(filepath, ".qp.xbcrypt")
+ 	    && (ends_with(filepath.c_str(), ".qp")
+		|| (ends_with(filepath.c_str(), ".qp.xbcrypt")
 		    && opt_decrypt))) {
  		cmd << " | qpress -dio ";
- 		dest_filepath[strlen(dest_filepath) - 3] = 0;
+		dest_filepath = dest_filepath.substr(0,dest_filepath.size() -3);
  		if (needs_action) {
  			message << " and ";
  		}
@@ -2213,41 +2214,32 @@ decrypt_decompress_file(const char *filepath, uint thread_n)
  	}
 	message << " " << filepath;
         output_file << "PXBOUTFILE" << thread_n << "p" << getpid();
-        if (setenv(output_file.str().c_str(), dest_filepath, 1) == -1) {
+        if (setenv(output_file.str().c_str(), dest_filepath.c_str(), 1) == -1) {
 		int errsv = errno;
 		msg_ts("[%02u] Can not set env %s: to %s got error %d\n",
 				thread_n, output_file.str().c_str(),
-				dest_filepath, errsv);
+				dest_filepath.c_str(), errsv);
 		return false;
 	}
-	cmd << " >\"$" << output_file.str().c_str() << "\"";
+	cmd << " >$" << output_file.str().c_str() << "";
 
 
  	if (needs_action) {
-
 		msg_ts("[%02u] %s\n", thread_n, message.str().c_str());
-
-                /* cat $XBINFILE|xbcrypt --decrpyt|qpress -dio > $XBOUTFILE */
-                int ret_status = system(cmd.str().c_str());
-                if (ret_status != 0) {
-			msg_ts("[%02u] Can not run %s on %s got error %d\n",
-					thread_n, cmd.str().c_str(),filepath,
-					ret_status);
-			msg_ts("[%02u] Enviorment variable are %s and %s \n",
-					thread_n, getenv(input_file.str().c_str()),
-					getenv(output_file.str().c_str()));
-
+		/* cat $XBINFILE|xbcrypt --decrpyt|qpress -dio > $XBOUTFILE */
+		int ret_status = system(cmd.str().c_str());
+		if (ret_status != 0) {
+			msg_ts("[%02u] Can not run %s on %s got error %d\n", thread_n, cmd.str().c_str(), filepath.c_str(), ret_status);
+			msg_ts("[%02u] Enviorment variable are %s and %s \n", thread_n, getenv(input_file.str().c_str()), getenv(output_file.str().c_str()));
 			return false;
-                }
-
-                if (opt_remove_original) {
-	 		msg_ts("[%02u] removing %s\n", thread_n, filepath);
-	 		if (my_delete(filepath, MYF(MY_WME)) != 0) {
-	 			return(false);
-	 		}
-	 	}
-	 }
- 	free(dest_filepath);
+		}
+		if (opt_remove_original) {
+			msg_ts("[%02u] removing %s\n", thread_n, filepath.c_str());
+			if (my_delete(filepath.c_str(), MYF(MY_WME)) != 0) {
+				return(false);
+			}
+		}
+	}
 	unsetenv(input_file.str().c_str());
 	unsetenv(output_file.str().c_str());
 
