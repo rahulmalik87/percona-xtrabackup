@@ -2222,7 +2222,6 @@ decrypt_decompress_file(const char *filepath, uint thread_n)
 	}
 	cmd << " >\"$" << output_file.str().c_str() << "\"";
 
- 	free(dest_filepath);
 
  	if (needs_action) {
 
@@ -2248,6 +2247,7 @@ decrypt_decompress_file(const char *filepath, uint thread_n)
 	 		}
 	 	}
 	 }
+ 	free(dest_filepath);
 	unsetenv(input_file.str().c_str());
 	unsetenv(output_file.str().c_str());
 
