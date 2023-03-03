@@ -2423,17 +2423,29 @@ cleanup:
 }
 
 bool decrypt_decompress_file(const char *filepath, uint thread_n) {
-  std::stringstream cmd, message;
+  std::stringstream cmd, message, input_file, output_file;
   char buf[FN_LEN];
   bool needs_action = false;
+  static std::mutex env_lock;
 
   if (escape_string_for_mysql(&my_charset_utf8mb4_general_ci, buf, 0, filepath,
                               strlen(filepath)) == (size_t)-1) {
     xb::error() << "Error escaping file : " << filepath;
     return false;
   }
-  char *dest_filepath = strdup(buf);
-  cmd << "cat " << SQUOTE(buf);
+  char *dest_filepath = strdup(filepath);
+  input_file << "PXBINFILE" << thread_n;
+
+  env_lock.lock();
+  if (setenv(input_file.str().c_str(), filepath, 1) != 0) {
+    int errsv = errno;
+    xb::error() << "[" << thread_n << "] Can not set env " << input_file.str()
+                << " : to " << filepath << " got error " << errsv;
+    env_lock.unlock();
+    return false;
+  }
+  env_lock.unlock();
+  cmd << "sh cat $" << input_file.str().c_str();
 
   if (ends_with(filepath, ".xbcrypt") && opt_decrypt) {
     cmd << " | xbcrypt --decrypt --encrypt-algo="
@@ -2481,20 +2493,36 @@ bool decrypt_decompress_file(const char *filepath, uint thread_n) {
     needs_action = true;
   }
 
-  cmd << " > " << SQUOTE(dest_filepath);
   message << " " << filepath;
+  output_file << "PXBOUTFILE" << thread_n;
+  env_lock.lock();
+  if (setenv(output_file.str().c_str(), dest_filepath, 1) != 0) {
+    int errsv = errno;
+    xb::error() << "[" << thread_n << "] Can not set env " << output_file.str()
+                << " to " << dest_filepath << " got error " << errsv;
+    env_lock.unlock();
+    return false;
+  }
+  env_lock.unlock();
+  cmd << " > $" << output_file.str().c_str() << "";
 
   if (needs_action) {
     xb::info() << message.str().c_str();
+    ut_ad(strcmp(getenv(input_file.str().c_str()), filepath) == 0);
+    ut_ad(strcmp(getenv(output_file.str().c_str()), dest_filepath) == 0);
 
-    if (system(cmd.str().c_str()) != 0) {
-      return (false);
+    /* cat $XBINFILE|xbcrtyp --decrpyt|qpress -dio > $XBOUTFILE */
+    int ret_status = system(cmd.str().c_str());
+    if (ret_status != 0) {
+      xb::error() << "[" << thread_n << "] Can not run " << cmd.str() << " on "
+                  << filepath << " got error " << ret_status;
+      return false;
     }
 
     if (opt_remove_original) {
       xb::info() << "removing " << filepath;
       if (my_delete(filepath, MYF(MY_WME)) != 0) {
-        return (false);
+        return false;
       }
     }
   }
@@ -2507,6 +2535,11 @@ bool decrypt_decompress_file(const char *filepath, uint thread_n) {
   }
 
   free(dest_filepath);
+
+  env_lock.lock();
+  unsetenv(input_file.str().c_str());
+  unsetenv(output_file.str().c_str());
+  env_lock.unlock();
 
   return (true);
 }
